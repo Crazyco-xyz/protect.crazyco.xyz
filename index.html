@@ -1,0 +1,381 @@
+
+<!DOCTYPE html>
+<head>
+<title>CrazyCo DDoS Protection Guide</title>
+  <meta name="description" content="Don't let DDoS attacks take your Servers offline. Use these rules to block them!">
+  <meta property="og:image" content="/static/icon.png"/>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="darkreader" content="stfu">
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="/static/icon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Ubuntu">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="/static/style.css" rel="stylesheet">
+  <script src="/static/script.js" type="1dd569df2268aec07f389fcf-text/javascript"></script>
+  <script type="1dd569df2268aec07f389fcf-text/javascript">
+        function extras_setup(){
+            switch(document.getElementById("extras").style.display){
+                case "block":
+                    var h = document.getElementById("extras");
+                    fade(h)
+                    break;
+                case "none":
+                    var h = document.getElementById("extras");
+                    unfade(h)
+                    h.style.display = "block"
+                    break;
+            }
+        }
+        function nginx_setup(){
+            switch(document.getElementById("nginx").style.display){
+                case "block":
+                    var h = document.getElementById("nginx");
+                    fade(h)
+                    break;
+                case "none":
+                    var h = document.getElementById("nginx");
+                    unfade(h)
+                    h.style.display = "block"
+                    break;
+            }
+        }
+         function pre_nginx_setup(){
+            switch(document.getElementById("pre_nginx").style.display){
+                case "block":
+                    var h = document.getElementById("pre_nginx");
+                    fade(h)
+                    break;
+                case "none":
+                    var h = document.getElementById("pre_nginx");
+                    unfade(h)
+                    h.style.display = "block"
+                    break;
+            }
+        }
+        function cloudflare_setup(){
+            switch(document.getElementById("cloudflare").style.display){
+                case "block":
+                    var h = document.getElementById("cloudflare");
+                    fade(h)
+                    break;
+                case "none":
+                    var h = document.getElementById("cloudflare");
+                    unfade(h)
+                    h.style.display = "block"
+                    break;
+            }
+        }
+    </script>
+</head>
+<body>
+<a href="javascript:void(0);" class="icon" onclick="if (!window.__cfRLUnblockHandlers) return false; nav_drop()" data-cf-modified-1dd569df2268aec07f389fcf->
+</a>
+</div>
+<div class="content">
+<div class="flex-container-center" style="margin-top: 0%;">
+<div class="flex-item-container">
+<h1>DDoS Protection Guide</h1>
+<div style="padding: 10px; padding-top: 0px;">
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Information</h1>
+This is a guide on how to protect your site from getting <b>DDoS'ed</b> by specific methods like cache busting or just the basic flood. All the methods used below are methods discovered by either me, an old friend called <a href="https://racist.dev" target="_blank">null</a> or have been heavily modified and credited.
+</div>
+</div>
+<br>
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Requirements</h1>
+1. <text>Nginx</text><br>
+2. <text>A basic understanding of networking and how data works.</text><br>
+3. <text>A basic understanding of nginx, cloudflare, and proxy passing to another server using nginx.</text><br>
+4. <text>A basic understanding of regex. </text><br>
+</div>
+</div>
+<br>
+<div class="flex-container" style="gap: 0px;">
+<a class="flex-item-container" onclick="if (!window.__cfRLUnblockHandlers) return false; nginx_setup();" style="cursor: pointer;" data-cf-modified-1dd569df2268aec07f389fcf->Nginx Setup (Click me!)</a><br>
+</div>
+<br>
+<div class="flex-container" style="gap: 0px;">
+<a class="flex-item-container" onclick="if (!window.__cfRLUnblockHandlers) return false; cloudflare_setup();" style="cursor: pointer;" data-cf-modified-1dd569df2268aec07f389fcf->Cloudflare Setup (Click me!)</a><br>
+</div>
+<br>
+<div id="pre_nginx" style="display: none;">
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Nginx Optimizations</h1>
+First lets start by optimizing the Nginx config. Go ahead and go to <text style="color :rgb(18, 131, 197);">/etc/nginx/nginx.conf</text> and find <text style="color :rgb(18, 131, 197);">worker_processes</text> this is the amount "Threads" or cores your system has. You will need to set this to the max cores you have but if you do not know how many cores you have just set it to auto.
+</div>
+</div>
+<br>
+</div>
+<div id="nginx" style="display: none;">
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Inspection</h1>
+Alright so in this guide we are going to discover the issues or methods used by a lot of DDoS Tools and or "Stressers" as some people call them. Down below you can see the first solution that works to defeat some small DDoS Tools.
+</div>
+</div>
+<br>
+<div class="flex-item-container">
+<h1>Rate Limiting</h1>
+This example down below shows how you can limit your requests to 10 requests a minute per-ip. This method is using <b>Cloudflare</b> as a reverse proxy to hide my servers ip.
+<br><br>
+<text style="color :rgb(18, 131, 197);">zone=one:10m</text> is the amount of requests that get stored inside memory. 10m is equavalant to 160k ips. Now this can be changed depending on the conditions you are in.
+<br><br>
+<text style="color :rgb(18, 131, 197);">rate=10r/m</text> is the amount of requests you can have a minute per ip. You can also change it to 10r/s to limit the requests to seconds instead of minutes and when exceeded will return error code 429.
+<br><br>
+<text style="color :rgb(18, 131, 197);">nodelay</text> is used to not have a delay in between requests. Meaning you can have 9 successful requests back to without it having a delay. Then finally the 10th request will have a 100ms delay
+<br><br>
+<text style="color :rgb(18, 131, 197);">$http_x_forwarded_for</text> is used to obtain the persons ip connecting from <b>Cloudflare</b> and passes it to <b>Nginx</b>
+<br><br>
+<text style="color :rgb(18, 131, 197);">limit_req_status</text> is the status code that gets sent to the client when they exceed the ratelimit. Using 444 drops the connection entirely and doesnt return any data. Meaning it will help reduce bandwith usage on the website.
+<br><br><br>
+<a class="flex-item-container" href="https://www.nginx.com/blog/rate-limiting-nginx/">If you need some more understanding please click here.</a><br>
+<div style="padding: 10px;"><br><textarea readonly style="border-radius: 5px; text-align: left; width: 90%; height: 190px; padding: 10px; overflow: hidden; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+limit_req_zone $http_x_forwarded_for zone=one:20m rate=10r/m;
+limit_req_status 444;
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    location / {
+        limit_req zone=one nodelay;
+        proxy_pass http://127.0.0.1:1337;
+        proxy_set_header Host $host;
+    }
+}
+                            </textarea>
+</div>
+</div>
+<br>
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Cache Busting</h1>
+Down below you can see quite a few examples on what ive previously described as cache busting. Now cache busting is a very weird one when it comes to protecting your website. Cache busting can use many different methods from just numbers to even some letters inside the parameters. Now ill show you how to prevent a simplistic one.
+<div style="padding: 10px;">
+<img style="width: 100%;" src="/static/cache_bust.png">
+</div>
+So in the picture above you can see how its passing a query argument these types of attacks are easily fixed by using some simple regex.
+<br><br>
+<text style="color :rgb(18, 131, 197);">$args</text> are the query arguments passed to any location or file. In other terms it just means ? to start passing arguments
+<br><br>
+<text style="color :rgb(18, 131, 197);">~</text> is a part of the regex tester inside <b>Nginx</b> and what it basically means is that the request has to match the regex patten to get blocked.
+<br><br>
+<text style="color :rgb(231, 66, 66);">https://crazyco.xyz/?=621572517216521776521</text> is a example of a bad url containing a query parameter. But you can probably also see the flaw inside the url yourself they do not have a first parameter name for the query. Meaning you <b>could</b> block all querys that dont have a name. But due to it being a bad request you would return 444 to just drop the connection.
+<br><br>
+<text style="color :rgb(231, 66, 66);">https://crazyco.xyz/?622718217121=261526121762165</text> is a another example of a bad url containing a query. The first set of numbers needs to be atleast 12 characters defined by the regex pattern. The second set of numbers also has to have a minimum of 12 characters for it to be caught inside the regex pattern. But since its a bad request just return 444 to drop the connection.
+<br><br>
+<text style="color :rgb(231, 66, 66);">https://crazyco.xyz/?12456789124567891ads214567890976544567a</text> is a another example of a bad url containing a query. Except with this one their is no query name. But due to it being a bad request you would return 444 to just drop the connection.
+<br><br>
+<text style="color :rgb(231, 66, 66);">https://crazyco.xyz//261526121762165</text> is a another example of a bad url without passing a query parameter. But you can probably also see the flaw inside the url yourself in their request they added another / to // is like passing a invalid location itself but since the are adding numbers to it returns a 404 page since that location doesnt exist. The regex down below requires the location to have atleast 10 numbers in a row and the extra / to get triggered. But due to it being a bad request you would return 444 to just drop the connection.
+<br><br>
+<div style="padding: 10px;"><textarea readonly style="border-radius: 5px; text-align: left; width: 90%; height: 440px; padding: 10px; overflow: hidden; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+    limit_req_zone $http_x_forwarded_for zone=one:20m rate=10r/m;
+    limit_req_status 444;
+
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        if ($args ~ "=([0-9]{9,})" ){
+            return 444;
+        }
+
+        if ($args ~ "([0-9]{12,})=([0-9]{12,})" ){
+            return 444;
+        }
+
+        if ($args ~ "[0-9]{0,18}[a-zA-Z0-9]{3}[0-9]{18}[a-zA-Z0-9]{1}" ){
+            return 444;
+        }
+
+        location ~ "\/[0-9]{10,19}" {
+            return 444;
+        }
+
+        location / {
+            limit_req zone=one nodelay;
+            proxy_pass http://127.0.0.1:1337;
+            proxy_set_header Host $host;
+        }
+    }
+                                </textarea>
+<br><br>
+<b>Now keep in mind the methods described above for the cache busting prevention can change depending on the situation you may need. And how you serve your files.</b>
+<br><br>
+</div>
+</div>
+</div>
+<br>
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Bogus Http Refers</h1>
+This one is one of the most obvious methods to tell if its a DDos Attack or not. Most of your requests will either be refered by google, yahoo, bing or no refer at all (direct link type). But ive seen plently of requests that get sent with refers like these below.
+<br><br>
+<textarea readonly style="border-radius: 5px; text-align: left; width: 20%; height: 315px; padding: 10px; overflow: vertical; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+    fbi.gov
+    fbi.com
+    usatoday.io
+    usatoday.xyz
+    yahoo.com
+    google.com
+    bing.com
+    search.bing.com
+    aol.com
+    check-host.net
+    facebook.com
+    baidu.net
+    owbdhq8hl5tk
+    tangydistancejpk9k
+    youtube.com
+    pinterest.info
+    baidu.xyz
+    vk.pro
+    yahoo.xyz
+    cleanpetsccdl5.edu
+                                </textarea>
+<br><br>
+<text style="color :rgb(18, 131, 197);">~</text> is a part of the regex tester inside <b>Nginx</b> and what it basically means is that the request has to match the regex patten to get blocked.
+<br><br>
+<text style="color :rgb(18, 131, 197);">$http_referer</text> is the website or refer that get passed when a request is sent to the server. And if it contains one of the regex values. Drop the connection cause its bogus or malicious.
+<br><br>
+<div style="padding: 10px;"><textarea readonly style="border-radius: 5px; text-align: left; width: 90%; height: 555px; padding: 10px; overflow: hidden; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+    limit_req_zone $http_x_forwarded_for zone=one:20m rate=10r/m;
+    limit_req_status 444;
+
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        if ($http_referer ~ "(youtube\.com|fbi\.com|bing\.com|google\.com|yahoo\.com|aol\.com|facebook\.com|r\.search\.yahoo\.com|check-host\.net|owbdhq8hl5tk|baidu\.net|facebook|tangydistancejpk9k|usatoday\.io|pinterest\.info|usatoday\.xyz|baidu\.xyz|vk\.pro|yahoo\.xyz|cleanpetsccdl5\.edu)") {
+            return 444;
+        }
+
+        if ($args ~ "=([0-9]{9,})" ){
+            return 444;
+        }
+
+        if ($args ~ "([0-9]{12,})=([0-9]{12,})" ){
+            return 444;
+        }
+
+        if ($args ~ "[0-9]{0,18}[a-zA-Z0-9]{3}[0-9]{18}[a-zA-Z0-9]{1}" ){
+            return 444;
+        }
+
+        location ~ "\/[0-9]{10,19}" {
+            return 444;
+        }
+
+        location / {
+            limit_req zone=one nodelay;
+            proxy_pass http://127.0.0.1:1337;
+            proxy_set_header Host $host;
+        }
+    }
+                                </textarea>
+<br><br>
+<b>Now this will block a lot of things that refer anything above and will block some crawlers meaning your website will not appear on google's search, bings, or even yahoos. This could lead to problems if you use any of the things above for either caching, verification checking, or anything else you may need to modify it to suit your needs.</b>
+<br><br>
+</div>
+</div>
+</div>
+<br>
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Access.log Parsing</h1>
+In this section we will go over parsing the <b>Nginx</b> Access.log file to display how many times a ip has reached our <b>Nginx</b> server. Down below is a example command to parse the log file and show how many hits or requests per ip actually hit the server.
+<br><br>
+<textarea readonly style="border-radius: 5px; text-align: left; width: 90%; height: 15px; padding: 10px; overflow: hidden; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+   awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -nr
+                                </textarea><br><br>
+Now when running the command above will print a output inside your console like this image below.
+<br><br>
+<img src="/static/parsing.png">
+<br><br>
+Now lets look a bit deeper into this. Lets go over to <a href="https://ipinfo.io/">ipinfo.io</a> and see if this if one of the ips above is a hosting provider.
+<br><br>
+<text style="color :rgb(18, 131, 197);">5.161.183.125</text> is a hosting provider from <b>Hetzner</b> which is a VPS provider. You could block this ASN and prevent all future Hetzner ips from accessing your website.
+</div>
+</div>
+</div>
+<br>
+<div id="cloudflare" style="display: none;">
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Cloudflare Setup</h1>
+Alright now that youve done the above things. Lets get on to the easy side of things. Now lets first navigate to cloudflare and locate the WAF area on your websites panel.
+</div>
+</div>
+<br>
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>Bad Actors</h1>
+In this section we will go over my Bad Actors WAF rule. In this rule it does many things that will stop quite a few attacks just by itself and requires almost no modifying.
+<br><br>
+<div>
+<textarea readonly style="border-radius: 5px; text-align: left; width: 90%; height: 180px; padding: 10px; overflow: vertical; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+1. Blocks HTTP Connections
+2. Blocks A huge amount of malicous of useragents that are either used for DDoSing or crawling.
+3. Blocks anything that is above 1 threat level.
+4. Blocks Spoofed IPS
+5. Blocks any HTTP Version that is not 1.0, 1.1. 1.2, 2, or even 3
+6. Blocks Tor
+7. Blocks Unknown States
+8. Blocks Known Bots
+9. Blocks requests that are not GET, POST
+10. Blocks request refers containing .xyz, .com, .edu, .gov, .biz, .io, .net, .pro, .info 
+11. Blocks most public TLS methods used for DDoSing
+                                </textarea>
+<br><br>
+Now to actually put this onto your website. Create a new rule and click <b>Edit Expression</b> then paste the expression from down below inside this area. Feel free to name it whatever.
+<br><br>
+<textarea readonly style="border-radius: 5px; text-align: left; width: 90%; height: 170px; padding: 10px; overflow: vertical; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+(cf.client.bot) or (http.user_agent contains "Cyotek") or (http.user_agent contains "python") or (http.user_agent contains "undefined") or (http.user_agent eq "Empty user agent") or (http.user_agent contains "HTTrack") or (http.user_agent contains "Java") or (http.user_agent contains "curl") or (http.user_agent contains "RestSharp") or (http.user_agent contains "Ruby") or (http.user_agent contains "Nmap") or (http.user_agent eq "libwww") or (not http.request.version in {"HTTP/1.0" "HTTP/1.1" "HTTP/1.2" "HTTP/2" "HTTP/3"}) or (ip.geoip.country eq "T1") or (ip.geoip.country eq "XX") or (cf.threat_score ge 1) or (not http.request.method in {"GET" "POST"}) or (http.user_agent contains " Uptime-Kuma") or (http.user_agent contains "sitechecker") or (http.user_agent contains "axios") or (http.referer contains "fbi.com") or (http.user_agent eq " Stripe/1.0 (+https://stripe.com/docs/webhooks)") or (http.cookie eq "cf_rate=mjRCQSuBeJk3Db") or (http.user_agent contains "Python") or (http.user_agent contains "YaBrowser") or (http.user_agent contains "lt-GtkLauncher") or (http.user_agent contains "3gpp-gba") or (http.user_agent contains "UNTRUSTED") or (http.user_agent contains "Galeon/1.3.15") or (http.user_agent contains "Phoenix/0.2" and http.user_agent contains "Fennec/2.0.1") or (http.user_agent contains "Minefield") or (http.user_agent contains ".NET") or (http.user_agent contains " Arora/0.8.0") or (http.referer eq "https://check-host.net") or (http.user_agent contains "https://check-host.net") or (http.user_agent contains "CheckHost") or (ip.src in {0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 127.0.53.53 169.254.0.0/16 172.16.0.0/12 192.0.0.0/24 192.0.2.0/24 192.168.0.0/16 198.18.0.0/15 198.51.100.0/24 203.0.113.0/24 224.0.0.0/4 240.0.0.0/4 255.255.255.255/32}) or (http.user_agent eq "-") or (http.user_agent eq " ") or (http.user_agent eq "nginx-ssl early hints")
+                                </textarea>
+</div>
+</div>
+</div>
+<br>
+<br>
+<div class="flex-container">
+<div class="flex-item-container">
+<h1>ASN Blocking</h1>
+Alright so say in theory you're getting a lot of requests sent to your server from a OVH vps. What you could do to prevent this entirely is setup the <b>Cloudflares WAF</b> to block any ip address that is inside their ASN. To do this you can copy the expression from down below.
+<br><br>
+<textarea readonly style="border-radius: 5px; text-align: left; width: 90%; height: 20px; padding: 10px; overflow: hidden; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+(ip.geoip.asnum in {16276})
+                                </textarea><br><br>
+Now the only issue that will and could occur while blocking ASN's is that if you just block a ASN without checking if they are a hosting provider or not could block legitimate users from accessing your site. To check if the ip is from a hosting company I like to use <a href="https://ipinfo.io/">ipinfo.io</a> to check if its from a business or hosting companys.
+<br><br>
+If you want a ASN database that has quite a few malicious ips. You can click the link below to view a database "NullifiedCode" has gathered.
+<br><br><br>
+<a class="flex-item-container" href="https://github.com/NullifiedCode/ASN-Lists" target="_blank">ASN List</a><br><br>
+</div>
+</div>
+<br>
+<div class="flex-container">
+<div class="flex-item-container">
+<h1> End </h1>
+This is the end of the guide. Down below is a example of an amount of requests blocked from <b>Cloudflares WAF</b> & <b>Nginx Config </b><br><br>
+<textarea readonly style="border-radius: 5px; text-align: left; width: 90%; height: 45px; padding: 10px; overflow: hidden; border: none; outline: none; resize: none; color: white; background-color: #414141;">
+    Cloudflare: 431,340 requests dropped because of Bad Actors Rule
+    Nginx: 572,625 requests dropped with 444 error code.
+    Nginx: 2,461 requests accepted.
+                                </textarea>
+<br>
+</div>
+</div>
+</div>
+<br>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-image"></div>
+</div><script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="1dd569df2268aec07f389fcf-|49" defer></script>
